@@ -5,10 +5,22 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import json
+from matplotlib.colors import LinearSegmentedColormap
+
+# Corporate color scheme
+NAVY_BLUE = "#001f3f"
+GOLD = "#FFD700"
+YELLOW = "#FFFF00"
+ORANGE = "#FFA500"
 
 # Global variables to hold the current matplotlib figure and data
 current_fig = None
 current_df = None
+
+def get_corporate_cmap():
+    """Return a custom colormap based on the corporate colours."""
+    corporate_colors = [NAVY_BLUE, GOLD, YELLOW, ORANGE]
+    return LinearSegmentedColormap.from_list("corp_map", corporate_colors)
 
 def load_risk_mapping(filename='risk_config.json'):
     """Load risk mapping from a JSON file.
@@ -32,17 +44,18 @@ def edit_risk_mapping():
     """Open a window that allows users to update category labels and scores."""
     edit_win = tk.Toplevel()
     edit_win.title("Edit Risk Mapping")
+    edit_win.configure(bg="white")
     
     # Load the current mapping
     current_mapping = load_risk_mapping()
     
     # Frame to hold our rows of entries
-    rows_frame = tk.Frame(edit_win)
+    rows_frame = tk.Frame(edit_win, bg="white")
     rows_frame.pack(padx=10, pady=10)
     
     # Headers for the two columns
-    tk.Label(rows_frame, text="Category Label").grid(row=0, column=0, padx=5)
-    tk.Label(rows_frame, text="Score").grid(row=0, column=1, padx=5)
+    tk.Label(rows_frame, text="Category Label", bg="white", fg=NAVY_BLUE).grid(row=0, column=0, padx=5)
+    tk.Label(rows_frame, text="Score", bg="white", fg=NAVY_BLUE).grid(row=0, column=1, padx=5)
     
     # Lists to hold the entry widgets for later retrieval
     label_entries = []
@@ -67,7 +80,7 @@ def edit_risk_mapping():
     def add_empty_row():
         add_row()
     
-    add_row_button = tk.Button(edit_win, text="Add Category", command=add_empty_row)
+    add_row_button = tk.Button(edit_win, text="Add Category", command=add_empty_row, bg=GOLD, fg=NAVY_BLUE)
     add_row_button.pack(pady=5)
     
     # Function to save the updated mapping to the JSON file
@@ -87,14 +100,13 @@ def edit_risk_mapping():
         
         try:
             with open("risk_config.json", "w") as f:
-                # Save the mapping directly; alternatively, wrap it in a key if desired.
                 json.dump(new_mapping, f, indent=4)
             messagebox.showinfo("Mapping Updated", "Risk mapping successfully updated!")
             edit_win.destroy()
         except Exception as e:
             messagebox.showerror("Error", f"An error occurred while saving the mapping: {e}")
     
-    save_button = tk.Button(edit_win, text="Save Mapping", command=save_mapping)
+    save_button = tk.Button(edit_win, text="Save Mapping", command=save_mapping, bg=GOLD, fg=NAVY_BLUE)
     save_button.pack(pady=5)
 
 def load_data(filename):
@@ -142,6 +154,7 @@ def calculate_risk_score(df):
 def visualize_risk_bubble(df, parent_frame):
     """Generate and embed a risk assessment bubble chart in the given Tkinter frame."""
     global current_fig
+    custom_cmap = get_corporate_cmap()
 
     required_columns = {"Initiative", "Division", "Risk Score"}
     missing_columns = required_columns - set(df.columns)
@@ -164,15 +177,17 @@ def visualize_risk_bubble(df, parent_frame):
 
     sizes = agg_df["Risk Score"] * 100
 
-    current_fig = plt.figure(figsize=(8, 6))
+    current_fig = plt.figure(figsize=(8, 6), facecolor="white")
     scatter = plt.scatter(agg_df["x"], agg_df["y"], s=sizes, c=agg_df["Risk Score"],
-                          cmap="plasma", alpha=0.8, edgecolors="black")
-    plt.colorbar(scatter, label="Risk Score")
-    plt.xticks(ticks=range(len(divisions)), labels=divisions, rotation=45)
-    plt.yticks(ticks=range(len(initiatives)), labels=initiatives)
-    plt.xlabel("Division")
-    plt.ylabel("Initiative")
-    plt.title("Compliance Risk Bubble Chart")
+                          cmap=custom_cmap, alpha=0.8, edgecolors="black")
+    cbar = plt.colorbar(scatter)
+    cbar.set_label("Risk Score", color=NAVY_BLUE)
+    
+    plt.xticks(ticks=range(len(divisions)), labels=divisions, rotation=45, color=NAVY_BLUE)
+    plt.yticks(ticks=range(len(initiatives)), labels=initiatives, color=NAVY_BLUE)
+    plt.xlabel("Division", color=NAVY_BLUE)
+    plt.ylabel("Initiative", color=NAVY_BLUE)
+    plt.title("Compliance Risk Bubble Chart", color=NAVY_BLUE)
     plt.tight_layout()
 
     canvas = FigureCanvasTkAgg(current_fig, master=parent_frame)
@@ -182,6 +197,7 @@ def visualize_risk_bubble(df, parent_frame):
 def visualize_risk_heatmap(df, parent_frame):
     """Generate and embed a risk assessment heatmap in the given Tkinter frame."""
     global current_fig
+    custom_cmap = get_corporate_cmap()
 
     required_columns = {"Initiative", "Division", "Risk Score"}
     missing_columns = required_columns - set(df.columns)
@@ -196,10 +212,13 @@ def visualize_risk_heatmap(df, parent_frame):
     pivot_df = df.pivot_table(index="Initiative", columns="Division", values="Risk Score", aggfunc="mean")
     pivot_df = pivot_df.fillna(0)
 
-    current_fig = plt.figure(figsize=(8, 6))
+    current_fig = plt.figure(figsize=(8, 6), facecolor="white")
     ax = current_fig.add_subplot(111)
-    sns.heatmap(pivot_df, annot=True, fmt=".1f", cmap="Reds", ax=ax)
-    ax.set_title("Compliance Risk Heatmap")
+    sns.heatmap(pivot_df, annot=True, fmt=".1f", cmap=custom_cmap, ax=ax,
+                cbar_kws={"label": "Risk Score"}, annot_kws={"color": NAVY_BLUE})
+    ax.set_title("Compliance Risk Heatmap", color=NAVY_BLUE)
+    ax.tick_params(axis='x', colors=NAVY_BLUE)
+    ax.tick_params(axis='y', colors=NAVY_BLUE)
     current_fig.tight_layout()
 
     canvas = FigureCanvasTkAgg(current_fig, master=parent_frame)
@@ -209,6 +228,7 @@ def visualize_risk_heatmap(df, parent_frame):
 def visualize_risk_stacked_bar(df, parent_frame):
     """Generate and embed a risk assessment stacked bar chart in the given Tkinter frame."""
     global current_fig
+    custom_cmap = get_corporate_cmap()
 
     required_columns = {"Initiative", "Division", "Risk Score"}
     missing_columns = required_columns - set(df.columns)
@@ -222,11 +242,13 @@ def visualize_risk_stacked_bar(df, parent_frame):
 
     pivot_df = df.pivot_table(index="Initiative", columns="Division", values="Risk Score", aggfunc="mean", fill_value=0)
 
-    current_fig, ax = plt.subplots(figsize=(8, 6))
-    pivot_df.plot(kind='bar', stacked=True, ax=ax, colormap="plasma")
-    ax.set_title("Compliance Risk Stacked Bar Chart")
-    ax.set_xlabel("Initiative")
-    ax.set_ylabel("Risk Score")
+    current_fig, ax = plt.subplots(figsize=(8, 6), facecolor="white")
+    pivot_df.plot(kind='bar', stacked=True, ax=ax, colormap=custom_cmap)
+    ax.set_title("Compliance Risk Stacked Bar Chart", color=NAVY_BLUE)
+    ax.set_xlabel("Initiative", color=NAVY_BLUE)
+    ax.set_ylabel("Risk Score", color=NAVY_BLUE)
+    ax.tick_params(axis='x', colors=NAVY_BLUE)
+    ax.tick_params(axis='y', colors=NAVY_BLUE)
     current_fig.tight_layout()
 
     canvas = FigureCanvasTkAgg(current_fig, master=parent_frame)
@@ -285,32 +307,41 @@ def main():
     root = tk.Tk()
     root.title("Risk Assessment Dashboard")
     root.geometry("900x700")
+    # Set the main window background to navy blue
+    root.configure(bg=NAVY_BLUE)
     
     # Top frame for controls
-    top_frame = tk.Frame(root)
+    top_frame = tk.Frame(root, bg=NAVY_BLUE)
     top_frame.pack(pady=10)
     
     chart_type = tk.StringVar()
     chart_type.set("Bubble Chart")  # default selection
+    
     chart_type_menu = tk.OptionMenu(top_frame, chart_type, "Bubble Chart", "Heatmap", "Stacked Bar Chart")
+    chart_type_menu.configure(bg=GOLD, fg=NAVY_BLUE)
+    chart_type_menu["menu"].configure(bg=GOLD, fg=NAVY_BLUE)
     chart_type_menu.pack(side=tk.LEFT, padx=5)
     
     load_button = tk.Button(top_frame, text="Load Data File",
-                            command=lambda: on_load_file(chart_frame, chart_type))
+                            command=lambda: on_load_file(chart_frame, chart_type),
+                            bg=GOLD, fg=NAVY_BLUE)
     load_button.pack(side=tk.LEFT, padx=5)
     
     refresh_button = tk.Button(top_frame, text="Refresh Chart",
-                               command=lambda: draw_chart(chart_frame, chart_type))
+                               command=lambda: draw_chart(chart_frame, chart_type),
+                               bg=GOLD, fg=NAVY_BLUE)
     refresh_button.pack(side=tk.LEFT, padx=5)
     
-    # Button to open the risk mapping editor
-    edit_mapping_button = tk.Button(top_frame, text="Edit Risk Mapping", command=edit_risk_mapping)
+    edit_mapping_button = tk.Button(top_frame, text="Edit Risk Mapping", command=edit_risk_mapping,
+                                    bg=GOLD, fg=NAVY_BLUE)
     edit_mapping_button.pack(side=tk.LEFT, padx=5)
     
-    save_button = tk.Button(top_frame, text="Save Chart", command=save_chart)
+    save_button = tk.Button(top_frame, text="Save Chart", command=save_chart,
+                            bg=GOLD, fg=NAVY_BLUE)
     save_button.pack(side=tk.LEFT, padx=5)
     
-    chart_frame = tk.Frame(root)
+    # Chart frame with a white background for contrast
+    chart_frame = tk.Frame(root, bg="white")
     chart_frame.pack(fill=tk.BOTH, expand=True)
     
     root.mainloop()
