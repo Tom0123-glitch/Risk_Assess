@@ -1,7 +1,7 @@
-Initiative,Division,Severity,Implementation Period,Impact
-Init 1,Risk,On Track,Critical Focus,On Track
-Init 2,Finance,Enhanced Focus,Critical Focus,On Track
-Init 3,Finance,On Track,On Track,Enhanced Focus
-Init 4,Customer,Critical Focus,Enhanced Focus,Critical Focus
-Init 5,Operations,On Track,On Track,On Track
-Init 6,People,On Track,Enhanced Focus,On Track
+Initiative,Division,Current Position,Outlook,Implementation period
+Init 1,Risk,On Track,Critical Focus,0-3 Months
+Init 2,Finance,Enhanced Focus,Critical Focus,3-12 Months
+Init 3,Finance,On Track,On Track,3-12 Months
+Init 4,Customer,Critical Focus,Enhanced Focus,12-24 months
+Init 5,Operations,On Track,On Track,0-3 Months
+Init 6,People,On Track,Enhanced Focus,24+ Months
